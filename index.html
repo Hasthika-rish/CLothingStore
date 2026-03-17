@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LUMIÈRE | Modern Clothing Store</title>
+  <meta name="description" content="Discover modern, premium clothing and stylish fashion at LUMIÈRE. Shop our latest collection today.">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container">
+      <a href="index.html" class="logo">LUMIÈRE</a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="products.html">Shop</a></li>
+        <li><a href="products.html?category=women">Women</a></li>
+        <li><a href="products.html?category=men">Men</a></li>
+      </ul>
+      <div class="nav-icons">
+        <button class="icon-btn theme-toggle" aria-label="Toggle Theme" title="Toggle Theme">
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+        <button class="icon-btn search-btn" aria-label="Search" title="Search">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </button>
+        <a href="cart.html" class="icon-btn" aria-label="Cart" title="Cart">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+          <span class="cart-badge">2</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main>
+    <!-- Hero Section -->
+    <section class="hero">
+      <img src="images/hero_banner.png" alt="Elegant fashion collection" class="hero-bg">
+      <div class="hero-overlay"></div>
+      <div class="container hero-content">
+        <h1>Redefine Your Everyday Style</h1>
+        <p>Discover our exclusive new collection featuring premium fabrics, minimalist designs, and unparalleled comfort. Elevate your wardrobe today.</p>
+        <div class="action-buttons" style="justify-content: flex-start;">
+          <a href="products.html" class="btn btn-primary">Shop Collection</a>
+          <a href="#featured" class="btn btn-secondary">Explore More</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Featured Products -->
+    <section class="section" id="featured">
+      <div class="container">
+        <div class="text-center" style="margin-bottom: 4rem;">
+          <h2 style="font-size: 2.5rem; font-weight: 700;">Trending Now</h2>
+          <p class="text-muted">Handpicked favorites from our latest arrivals.</p>
+        </div>
+
+        <div class="product-grid">
+          <!-- Product Card 1 -->
+          <article class="product-card">
+            <a href="product-details.html?id=1" class="product-img-wrap">
+              <img src="images/product_dress1.png" alt="Flora Summer Dress" class="product-img">
+              <div class="product-add-overlay">
+                 <button class="btn btn-accent" style="width: 100%;">Quick Add 🛒</button>
+              </div>
+            </a>
+            <div class="product-info">
+              <p class="product-category">Women • Dresses</p>
+              <h3 class="product-title"><a href="product-details.html?id=1">Floral Summer Midi Dress</a></h3>
+              <p class="product-price">$89.00</p>
+            </div>
+          </article>
+
+          <!-- Product Card 2 -->
+          <article class="product-card">
+            <a href="product-details.html?id=2" class="product-img-wrap">
+              <img src="images/product_shirt1.png" alt="Casual Linen Shirt" class="product-img">
+              <div class="product-add-overlay">
+                 <button class="btn btn-accent" style="width: 100%;">Quick Add 🛒</button>
+              </div>
+            </a>
+            <div class="product-info">
+              <p class="product-category">Men • Tops</p>
+              <h3 class="product-title"><a href="product-details.html?id=2">Premium Linen Relaxed Shirt</a></h3>
+              <p class="product-price">$65.00</p>
+            </div>
+          </article>
+
+          <!-- Product Card 3 -->
+          <article class="product-card">
+            <a href="product-details.html?id=3" class="product-img-wrap">
+              <img src="images/product_jacket1.png" alt="Denim Jacket" class="product-img">
+              <div class="product-add-overlay">
+                 <button class="btn btn-accent" style="width: 100%;">Quick Add 🛒</button>
+              </div>
+            </a>
+            <div class="product-info">
+              <p class="product-category">Women • Outerwear</p>
+              <h3 class="product-title"><a href="product-details.html?id=3">Vintage Wash Denim Jacket</a></h3>
+              <p class="product-price">$120.00</p>
+            </div>
+          </article>
+          
+          <!-- Mock Product 4 for layout -->
+          <article class="product-card">
+             <a href="product-details.html?id=4" class="product-img-wrap">
+              <div class="product-img" style="background: #EAEAEA; display: flex; align-items: center; justify-content: center; color: #999;">Coming Soon</div>
+              <div class="product-add-overlay">
+                 <button class="btn btn-accent" style="width: 100%;">Quick Add 🛒</button>
+              </div>
+            </a>
+            <div class="product-info">
+              <p class="product-category">Accessories</p>
+              <h3 class="product-title"><a href="product-details.html?id=4">Minimalist Leather Tote</a></h3>
+              <p class="product-price">$150.00</p>
+            </div>
+          </article>
+
+        </div>
+        
+        <div class="text-center" style="margin-top: 4rem;">
+          <a href="products.html" class="btn btn-secondary" style="padding: 16px 40px;">View All Products</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col" style="flex: 2;">
+          <div class="logo" style="margin-bottom: 1.5rem; color: #fff;">LUMIÈRE</div>
+          <p style="color: rgba(255,255,255,0.7); max-width: 300px;">
+            A refined collection of modern apparel designed for those who value quality, aesthetics, and timeless style.
+          </p>
+        </div>
+        <div class="footer-col">
+          <h4>Shop</h4>
+          <ul>
+            <li><a href="products.html?category=women">Women's Collection</a></li>
+            <li><a href="products.html?category=men">Men's Collection</a></li>
+            <li><a href="products.html?category=accessories">Accessories</a></li>
+            <li><a href="products.html">New Arrivals</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Support</h4>
+          <ul>
+            <li><a href="#">Help & FAQs</a></li>
+            <li><a href="#">Shipping & Returns</a></li>
+            <li><a href="#">Track Order</a></li>
+            <li><a href="#">Contact Us</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#">About Us</a></li>
+            <li><a href="#">Careers</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 LUMIÈRE Clothing. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

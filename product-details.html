@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Floral Summer Midi Dress | LUMIÈRE</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container">
+      <a href="index.html" class="logo">LUMIÈRE</a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="products.html">Shop</a></li>
+        <li><a href="products.html?category=women">Women</a></li>
+        <li><a href="products.html?category=men">Men</a></li>
+      </ul>
+      <div class="nav-icons">
+        <button class="icon-btn theme-toggle" aria-label="Toggle Theme" title="Toggle Theme">
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+        <button class="icon-btn search-btn" aria-label="Search" title="Search">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </button>
+        <a href="cart.html" class="icon-btn" aria-label="Cart" title="Cart">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+          <span class="cart-badge">2</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main>
+    <section class="section">
+      <div class="container">
+        
+        <div style="margin-bottom: 2rem;">
+          <a href="products.html" style="color: var(--text-muted); font-size: 0.9rem;">← Back to Clothing</a>
+        </div>
+
+        <div class="product-details">
+          
+          <!-- Image Gallery -->
+          <div class="product-images">
+             <img src="images/product_dress1.png" alt="Flora Summer Dress" id="mainImage" style="width: 100%; height: 100%; object-fit: cover; aspect-ratio: 4/5;">
+          </div>
+          
+          <!-- Information Panel -->
+          <div class="product-info-panel">
+            <h1 id="detailTitle">Floral Summer Midi Dress</h1>
+            <div class="price-large" id="detailPrice">$89.00</div>
+            
+            <p class="product-desc" id="detailDesc">
+              Embrace effortless elegance with this beautiful floral midi dress. Crafted from lightweight, breathable fabric, it features a timeless silhouette that flatters any figure. Perfect for casual daytime outings or a romantic evening under the stars. Experience the ultimate blend of comfort and style.
+            </p>
+            
+            <div class="size-selector">
+              <h4>Select Size</h4>
+              <div class="size-options">
+                <div class="size-opt">XS</div>
+                <div class="size-opt active">S</div>
+                <div class="size-opt">M</div>
+                <div class="size-opt">L</div>
+                <div class="size-opt">XL</div>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 2rem;">
+               <label for="qty" style="display:block; margin-bottom: 0.5rem; font-weight: 500;">Quantity</label>
+               <input type="number" id="qty" value="1" min="1" class="form-control" style="width: 100px;">
+            </div>
+            
+            <div class="action-buttons">
+              <button class="btn btn-primary" onclick="alert('Added to cart!')">Add to Cart</button>
+              <a href="checkout.html" class="btn btn-accent">Buy it Now</a>
+            </div>
+
+            <div style="margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+               <h4 style="margin-bottom: 1rem;">Product Details</h4>
+               <ul style="color: var(--text-muted); list-style: disc; padding-left: 1.2rem;">
+                  <li>100% Organic Cotton</li>
+                  <li>Machine wash cold</li>
+                  <li>Made in Italy</li>
+                  <li>Model is 5'9" wearing size S</li>
+               </ul>
+            </div>
+          </div>
+          
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer (Mini) -->
+  <footer>
+    <div class="container text-center">
+      <p style="color: rgba(255,255,255,0.7);">&copy; 2026 LUMIÈRE Clothing. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
