@@ -114,4 +114,168 @@ document.addEventListener('DOMContentLoaded', () => {
             searchOverlay.classList.remove('active');
         }
     });
+
+    // Admin return button logic
+    if (sessionStorage.getItem('isAdminSession') === 'true' && !window.location.pathname.includes('/admin/')) {
+        const adminBtn = document.createElement('a');
+        adminBtn.href = 'admin/dashboard.html';
+        adminBtn.innerText = '⚙️ Back to Admin';
+        adminBtn.style.position = 'fixed';
+        adminBtn.style.bottom = '30px';
+        adminBtn.style.left = '30px';
+        adminBtn.style.background = 'var(--primary-color)';
+        adminBtn.style.color = 'var(--secondary-color)';
+        adminBtn.style.padding = '12px 20px';
+        adminBtn.style.borderRadius = '30px';
+        adminBtn.style.boxShadow = '0 10px 25px rgba(0,0,0,0.3)';
+        adminBtn.style.zIndex = '9999';
+        adminBtn.style.textDecoration = 'none';
+        adminBtn.style.fontWeight = '600';
+        adminBtn.style.fontSize = '0.9rem';
+        adminBtn.style.display = 'flex';
+        adminBtn.style.alignItems = 'center';
+        adminBtn.style.gap = '8px';
+        adminBtn.style.border = '1px solid rgba(255,255,255,0.2)';
+        adminBtn.style.transition = 'all var(--transition-fast)';
+        
+        // Hover effect
+        adminBtn.addEventListener('mouseenter', () => {
+            adminBtn.style.transform = 'translateY(-3px)';
+            adminBtn.style.boxShadow = '0 15px 30px rgba(0,0,0,0.4)';
+            adminBtn.style.background = 'var(--accent-color)';
+            adminBtn.style.color = '#1A1A1A';
+        });
+        adminBtn.addEventListener('mouseleave', () => {
+            adminBtn.style.transform = 'translateY(0)';
+            adminBtn.style.boxShadow = '0 10px 25px rgba(0,0,0,0.3)';
+            adminBtn.style.background = 'var(--primary-color)';
+            adminBtn.style.color = 'var(--secondary-color)';
+        });
+
+        document.body.appendChild(adminBtn);
+    }
+
+    // 1. Storefront Mobile Navigation Drawer Injection & Logic
+    const navbar = document.querySelector('.navbar');
+    if (navbar) {
+        // Inject Hamburger Button if not exists
+        const container = navbar.querySelector('.container');
+        if (container && !container.querySelector('.hamburger-btn')) {
+            const hamburgerBtn = document.createElement('button');
+            hamburgerBtn.className = 'hamburger-btn';
+            hamburgerBtn.setAttribute('aria-label', 'Toggle Menu');
+            hamburgerBtn.innerHTML = `
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            `;
+            // Insert before the nav-icons or at the end of container
+            const navIcons = container.querySelector('.nav-icons');
+            if (navIcons) {
+                container.insertBefore(hamburgerBtn, navIcons);
+            } else {
+                container.appendChild(hamburgerBtn);
+            }
+
+            // Inject Drawer Markup
+            const drawerHtml = `
+                <div class="drawer-overlay" id="drawerOverlay"></div>
+                <div class="mobile-drawer" id="mobileDrawer">
+                    <div class="drawer-header">
+                        <div class="logo">Anjiana Store</div>
+                        <button class="drawer-close" id="drawerClose">✕</button>
+                    </div>
+                    <ul class="drawer-links">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="products.html">Shop</a></li>
+                        <li><a href="products.html?category=women">Women</a></li>
+                        <li><a href="products.html?category=men">Men</a></li>
+                    </ul>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', drawerHtml);
+
+            // Drawer Toggle Logic
+            const mobileDrawer = document.getElementById('mobileDrawer');
+            const drawerOverlay = document.getElementById('drawerOverlay');
+            const drawerClose = document.getElementById('drawerClose');
+
+            const toggleDrawer = () => {
+                hamburgerBtn.classList.toggle('active');
+                mobileDrawer.classList.toggle('active');
+                drawerOverlay.classList.toggle('active');
+                if (mobileDrawer.classList.contains('active')) {
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = '';
+                }
+            };
+
+            hamburgerBtn.addEventListener('click', toggleDrawer);
+            drawerClose.addEventListener('click', toggleDrawer);
+            drawerOverlay.addEventListener('click', toggleDrawer);
+
+            // Close drawer when clicking a link
+            const drawerLinks = mobileDrawer.querySelectorAll('.drawer-links a');
+            drawerLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    hamburgerBtn.classList.remove('active');
+                    mobileDrawer.classList.remove('active');
+                    drawerOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            });
+        }
+    }
+
+    // 2. Admin Sidebar Slide-out Drawer Logic
+    const adminLayout = document.querySelector('.admin-layout');
+    if (adminLayout) {
+        const adminSidebar = document.querySelector('.admin-sidebar');
+        if (adminSidebar) {
+            // Create Top Bar for Mobile if it doesn't exist
+            if (!document.querySelector('.admin-mobile-header')) {
+                const mobileHeader = document.createElement('div');
+                mobileHeader.className = 'admin-mobile-header';
+                mobileHeader.innerHTML = `
+                    <button class="admin-sidebar-toggle" id="adminSidebarToggle">☰</button>
+                    <div class="admin-mobile-logo">Anjiana Admin</div>
+                    <div style="width: 24px;"></div>
+                `;
+                // Insert before the first child of adminLayout
+                adminLayout.insertBefore(mobileHeader, adminLayout.firstChild);
+
+                // Create Overlay Backdrop
+                const overlay = document.createElement('div');
+                overlay.className = 'admin-sidebar-overlay';
+                overlay.id = 'adminSidebarOverlay';
+                document.body.appendChild(overlay);
+
+                const toggleBtn = document.getElementById('adminSidebarToggle');
+                
+                const toggleAdminSidebar = () => {
+                    adminSidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                    if (adminSidebar.classList.contains('active')) {
+                        document.body.style.overflow = 'hidden';
+                    } else {
+                        document.body.style.overflow = '';
+                    }
+                };
+
+                toggleBtn.addEventListener('click', toggleAdminSidebar);
+                overlay.addEventListener('click', toggleAdminSidebar);
+
+                // Close sidebar when clicking links inside it
+                const sidebarLinks = adminSidebar.querySelectorAll('.admin-nav a');
+                sidebarLinks.forEach(link => {
+                    link.addEventListener('click', () => {
+                        adminSidebar.classList.remove('active');
+                        overlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    });
+                });
+            }
+        }
+    }
 });

@@ -1,0 +1,23 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    match /products/{imageId} {
+      // Anyone can read images
+      allow read: if true;
+      // Only authenticated users (Admins) can upload/delete images
+      allow write: if isAuthenticated();
+    }
+    
+    // Default rule for other buckets
+    match /{allPaths=**} {
+      allow read, write: if isAuthenticated();
+    }
+  }
+}
