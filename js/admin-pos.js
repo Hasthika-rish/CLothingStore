@@ -61,7 +61,7 @@ function renderProducts(products) {
                     <span style="text-decoration: line-through; color: var(--text-muted); font-size: 0.8rem;">$${price.toFixed(2)}</span>
                     <span class="pos-product-price" style="font-weight: 700; color: var(--accent-color); font-size: 0.95rem;">$${discountedPrice.toFixed(2)}</span>
                 </div>
-                <div style="background: rgba(212, 175, 55, 0.1); color: var(--accent-color); padding: 1px 4px; border-radius: 2px; font-size: 0.7rem; font-weight: 500; display: inline-block; margin-top: 2px;">-${discount}%</div>
+                <div style="background: rgba(159, 93, 68, 0.1); color: var(--accent-color); padding: 1px 4px; border-radius: 2px; font-size: 0.7rem; font-weight: 500; display: inline-block; margin-top: 2px;">-${discount}%</div>
             `;
         } else {
             priceHTML = `<div class="pos-product-price" style="font-weight: 700; color: var(--accent-color);">$${price.toFixed(2)}</div>`;

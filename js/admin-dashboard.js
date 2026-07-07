@@ -35,7 +35,7 @@ async function loadProducts() {
                     <div style="display: flex; flex-direction: column; gap: 2px;">
                         <span style="text-decoration: line-through; color: var(--text-muted); font-size: 0.75rem;">$${price.toFixed(2)}</span>
                         <span style="font-weight: 600; color: var(--accent-color); font-size: 0.9rem;">$${discountedPrice.toFixed(2)}</span>
-                        <span style="background: rgba(212, 175, 55, 0.1); color: var(--accent-color); padding: 1px 4px; border-radius: 2px; font-size: 0.7rem; font-weight: 500; width: fit-content;">-${discount}%</span>
+                        <span style="background: rgba(159, 93, 68, 0.1); color: var(--accent-color); padding: 1px 4px; border-radius: 2px; font-size: 0.7rem; font-weight: 500; width: fit-content;">-${discount}%</span>
                     </div>
                 `;
             }
@@ -53,6 +53,14 @@ async function loadProducts() {
                 </td>
             `;
             productTableBody.appendChild(tr);
+        });
+
+        // Add event listeners for edit buttons
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.target.getAttribute('data-id');
+                window.location.href = `add-product.html?id=${id}`;
+            });
         });
 
         // Add event listeners for delete buttons

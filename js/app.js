@@ -90,6 +90,46 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     document.body.insertAdjacentHTML('beforeend', searchHtml);
     
+    // Inject the Toast Notification into the DOM globally
+    const toastHtml = `
+      <div id="toastNotification" class="toast-notification">
+        <div class="toast-icon" id="toastIcon">✓</div>
+        <div class="toast-message-body">
+          <h4 class="toast-title" id="toastTitle">Success</h4>
+          <p class="toast-desc" id="toastMessage"></p>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', toastHtml);
+
+    let toastTimeout;
+    window.showToast = function(message, isError = false) {
+        const toast = document.getElementById('toastNotification');
+        const toastIcon = document.getElementById('toastIcon');
+        const toastTitle = document.getElementById('toastTitle');
+        const toastMessage = document.getElementById('toastMessage');
+
+        if (!toast) return;
+
+        if (isError) {
+            toast.classList.add('error');
+            if (toastIcon) toastIcon.textContent = '✕';
+            if (toastTitle) toastTitle.textContent = 'Warning';
+        } else {
+            toast.classList.remove('error');
+            if (toastIcon) toastIcon.textContent = '✓';
+            if (toastTitle) toastTitle.textContent = 'Success';
+        }
+
+        if (toastMessage) toastMessage.textContent = message;
+        toast.classList.add('show');
+
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    };
+    
     const searchOverlay = document.querySelector('.search-overlay');
     const closeSearch = document.querySelector('.close-search');
     const searchInput = document.getElementById('searchInput');
@@ -143,7 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
             adminBtn.style.transform = 'translateY(-3px)';
             adminBtn.style.boxShadow = '0 15px 30px rgba(0,0,0,0.4)';
             adminBtn.style.background = 'var(--accent-color)';
-            adminBtn.style.color = '#1A1A1A';
+            adminBtn.style.color = '#FFFFFF';
         });
         adminBtn.addEventListener('mouseleave', () => {
             adminBtn.style.transform = 'translateY(0)';
@@ -278,4 +318,190 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
+
+    // ==========================================
+    // Hero Slider Initialization
+    // ==========================================
+    const heroSlider = document.querySelector('.hero-slider');
+    if (heroSlider) {
+        const slides = heroSlider.querySelectorAll('.slide');
+        const prevBtn = heroSlider.querySelector('.slider-arrow.prev');
+        const nextBtn = heroSlider.querySelector('.slider-arrow.next');
+        const dots = heroSlider.querySelectorAll('.dot');
+        let currentSlideIdx = 0;
+        let slideTimer;
+
+        const showSlide = (idx) => {
+            slides.forEach(slide => slide.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            currentSlideIdx = (idx + slides.length) % slides.length;
+            
+            slides[currentSlideIdx].classList.add('active');
+            if (dots[currentSlideIdx]) {
+                dots[currentSlideIdx].classList.add('active');
+            }
+        };
+
+        const nextSlide = () => {
+            showSlide(currentSlideIdx + 1);
+        };
+
+        const prevSlide = () => {
+            showSlide(currentSlideIdx - 1);
+        };
+
+        const resetTimer = () => {
+            clearInterval(slideTimer);
+            slideTimer = setInterval(nextSlide, 6000);
+        };
+
+        if (prevBtn) prevBtn.addEventListener('click', () => { prevSlide(); resetTimer(); });
+        if (nextBtn) nextBtn.addEventListener('click', () => { nextSlide(); resetTimer(); });
+
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                showSlide(index);
+                resetTimer();
+            });
+        });
+
+        resetTimer();
+    }
+
+    // ==========================================
+    // Wishlist Functionality
+    // ==========================================
+    function getWishlist() {
+        try {
+            const list = localStorage.getItem('wishlist');
+            return list ? JSON.parse(list) : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveWishlist(list) {
+        localStorage.setItem('wishlist', JSON.stringify(list));
+        updateWishlistBadges();
+    }
+
+    function toggleWishlistItem(id) {
+        const list = getWishlist();
+        const index = list.indexOf(id);
+        let added = false;
+        if (index === -1) {
+            list.push(id);
+            added = true;
+            if (window.showToast) {
+                window.showToast('Product added to wishlist! ❤️');
+            }
+        } else {
+            list.splice(index, 1);
+            if (window.showToast) {
+                window.showToast('Product removed from wishlist.');
+            }
+        }
+        saveWishlist(list);
+        updateHeartIconsState();
+        
+        // Reactively reload the wishlist products grid if we are on wishlist.html
+        if (window.location.pathname.includes('wishlist.html') && window.loadWishlistProducts) {
+            window.loadWishlistProducts();
+        }
+        return added;
+    }
+
+    function updateWishlistBadges() {
+        const list = getWishlist();
+        const badges = document.querySelectorAll('.wishlist-badge');
+        badges.forEach(badge => {
+            badge.textContent = list.length;
+            if (list.length > 0) {
+                badge.style.display = 'flex';
+                badge.style.alignItems = 'center';
+                badge.style.justifyContent = 'center';
+            } else {
+                badge.style.display = 'none';
+            }
+        });
+    }
+
+    function updateHeartIconsState() {
+        const list = getWishlist();
+        
+        // Update wishlist button icons in product grid
+        document.querySelectorAll('.card-wishlist-btn').forEach(btn => {
+            const id = btn.getAttribute('data-id');
+            const heartSvg = btn.querySelector('svg');
+            if (list.includes(id)) {
+                btn.classList.add('in-wishlist');
+                if (heartSvg) {
+                    heartSvg.style.fill = 'var(--accent-color)';
+                    heartSvg.style.stroke = 'var(--accent-color)';
+                }
+            } else {
+                btn.classList.remove('in-wishlist');
+                if (heartSvg) {
+                    heartSvg.style.fill = 'none';
+                    heartSvg.style.stroke = 'currentColor';
+                }
+            }
+        });
+
+        // Update single product details page wishlist button
+        const detailWishlistBtn = document.getElementById('wishlistBtn');
+        if (detailWishlistBtn) {
+            const id = new URLSearchParams(window.location.search).get('id');
+            const heartSvg = detailWishlistBtn.querySelector('svg');
+            if (list.includes(id)) {
+                detailWishlistBtn.classList.add('in-wishlist');
+                detailWishlistBtn.style.background = 'rgba(159, 93, 68, 0.1)';
+                detailWishlistBtn.style.borderColor = 'var(--accent-color)';
+                if (heartSvg) {
+                    heartSvg.style.fill = 'var(--accent-color)';
+                    heartSvg.style.stroke = 'var(--accent-color)';
+                }
+            } else {
+                detailWishlistBtn.classList.remove('in-wishlist');
+                detailWishlistBtn.style.background = 'transparent';
+                detailWishlistBtn.style.borderColor = 'var(--border-color)';
+                if (heartSvg) {
+                    heartSvg.style.fill = 'none';
+                    heartSvg.style.stroke = 'currentColor';
+                }
+            }
+        }
+    }
+
+    // Expose helpers globally so modules can call them
+    window.getWishlist = getWishlist;
+    window.toggleWishlistItem = toggleWishlistItem;
+    window.updateWishlistBadges = updateWishlistBadges;
+    window.updateHeartIconsState = updateHeartIconsState;
+
+    // Attach click events using event delegation
+    document.addEventListener('click', (e) => {
+        const cardBtn = e.target.closest('.card-wishlist-btn');
+        if (cardBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = cardBtn.getAttribute('data-id');
+            toggleWishlistItem(id);
+            return;
+        }
+
+        const detailBtn = e.target.closest('#wishlistBtn');
+        if (detailBtn) {
+            e.preventDefault();
+            const id = new URLSearchParams(window.location.search).get('id');
+            if (id) {
+                toggleWishlistItem(id);
+            }
+        }
+    });
+
+    // Initial load
+    updateWishlistBadges();
+    updateHeartIconsState();
 });

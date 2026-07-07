@@ -11,11 +11,11 @@ export function saveCart(cart) {
     updateCartBadge();
 }
 
-export function addToCart(product, size, quantity) {
+export function addToCart(product, size, quantity, color = 'N/A') {
     const cart = getCart();
     
-    // Check if item already exists in cart with same size
-    const existingItemIndex = cart.findIndex(item => item.id === product.id && item.size === size);
+    // Check if item already exists in cart with same size and color
+    const existingItemIndex = cart.findIndex(item => item.id === product.id && item.size === size && item.color === color);
     
     const originalPrice = parseFloat(product.price);
     const discount = parseFloat(product.discount || 0);
@@ -30,12 +30,21 @@ export function addToCart(product, size, quantity) {
             price: actualPrice,
             imageUrl: product.imageUrl,
             size: size,
+            color: color,
             quantity: quantity
         });
     }
     
     saveCart(cart);
-    alert(`${quantity}x ${product.name} added to cart!`);
+    let desc = `Size: ${size}`;
+    if (color && color !== 'N/A') {
+        desc += `, Color: ${color}`;
+    }
+    if (window.showToast) {
+        window.showToast(`${quantity}x ${product.name} (${desc}) added to cart!`);
+    } else {
+        alert(`${quantity}x ${product.name} added to cart!`);
+    }
 }
 
 export function removeFromCart(index) {
@@ -101,7 +110,7 @@ export function renderCart() {
                             <h3 style="font-size: 1.1rem;"><a href="product-details.html?id=${item.id}">${item.name}</a></h3>
                             <div style="font-weight: 500;">$${itemTotal.toFixed(2)}</div>
                         </div>
-                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem;">Size: ${item.size || 'N/A'}</p>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem;">Size: ${item.size || 'N/A'}${item.color && item.color !== 'N/A' ? ` • Color: ${item.color}` : ''}</p>
                         <p style="color: var(--text-muted); font-size: 0.9rem;">$${parseFloat(item.price).toFixed(2)} each</p>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
