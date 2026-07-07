@@ -212,14 +212,19 @@ export async function loadSingleProduct() {
                         </div>
                     </div>
 
-                    <div class="product-actions" style="margin-top: 2rem; display: flex; gap: 1rem;">
-                        <button id="addToCartBtn" class="btn btn-primary" style="flex: 1; padding: 16px; font-size: 1.1rem;" ${!inStock ? 'disabled' : ''}>
-                            ${inStock ? 'Add to Cart - ' + formatPrice(sellingPrice) : 'Out of Stock'}
-                        </button>
-                        <button id="wishlistBtn" class="btn btn-secondary" style="width: 56px; padding: 16px; display: flex; align-items: center; justify-content: center;" title="Add to Wishlist">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                            </svg>
+                    <div class="product-actions" style="margin-top: 2rem; display: flex; flex-direction: column; gap: 1rem;">
+                        <div style="display: flex; gap: 1rem; width: 100%;">
+                            <button id="addToCartBtn" class="btn btn-primary" style="flex: 1; padding: 16px; font-size: 1.1rem;" ${!inStock ? 'disabled' : ''}>
+                                ${inStock ? 'Add to Cart - ' + formatPrice(sellingPrice) : 'Out of Stock'}
+                            </button>
+                            <button id="wishlistBtn" class="btn btn-secondary" style="width: 56px; padding: 16px; display: flex; align-items: center; justify-content: center;" title="Add to Wishlist">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <button id="buyNowBtn" class="btn btn-accent" style="width: 100%; padding: 16px; font-size: 1.1rem;" ${!inStock ? 'disabled' : ''}>
+                            ${inStock ? 'Buy Now' : 'Out of Stock'}
                         </button>
                     </div>
                 </div>
@@ -253,6 +258,7 @@ function attachProductDetailListeners(id, data) {
     const qtyPlus = document.getElementById('qtyPlus');
     const qtyInput = document.getElementById('qtyInput');
     const addToCartBtn = document.getElementById('addToCartBtn');
+    const buyNowBtn = document.getElementById('buyNowBtn');
 
     const getAvailableStock = (size, color) => {
         if (size && color) {
@@ -374,6 +380,11 @@ function attachProductDetailListeners(id, data) {
             
             addToCartBtn.disabled = !inStock;
             addToCartBtn.textContent = inStock ? `Add to Cart - ${formatPrice(sellingPrice)}` : 'Out of Stock';
+            
+            if (buyNowBtn) {
+                buyNowBtn.disabled = !inStock;
+                buyNowBtn.textContent = inStock ? 'Buy Now' : 'Out of Stock';
+            }
         }
     };
 
@@ -484,6 +495,72 @@ function attachProductDetailListeners(id, data) {
             }
 
             addToCart(data, size, qty, color);
+        });
+    }
+
+    if (buyNowBtn) {
+        buyNowBtn.addEventListener('click', () => {
+            const qty = parseInt(qtyInput.value);
+            
+            // Validate zero or less quantity
+            if (qty <= 0 || isNaN(qty)) {
+                if (window.showToast) {
+                    window.showToast('Product quantity is not valid.', true);
+                } else {
+                    alert('Product quantity is not valid.');
+                }
+                return;
+            }
+
+            // Get selected size
+            const activeSizeOpt = document.querySelector('.size-opt.active');
+            const activeColorOpt = document.querySelector('.color-opt.active');
+            
+            let size = 'Standard';
+            if (data.sizes && data.sizes.length > 0) {
+                if (!activeSizeOpt) {
+                    if (window.showToast) {
+                        window.showToast('Please select a size first.', true);
+                    } else {
+                        alert('Please select a size first.');
+                    }
+                    return;
+                }
+                size = activeSizeOpt.innerText.trim();
+            }
+
+            let color = 'N/A';
+            if (data.colors && data.colors.length > 0) {
+                if (!activeColorOpt) {
+                    if (window.showToast) {
+                        window.showToast('Please select a color first.', true);
+                    } else {
+                        alert('Please select a color first.');
+                    }
+                    return;
+                }
+                color = activeColorOpt.getAttribute('data-color');
+            }
+
+            // Double check stock check on click
+            const currentStock = getAvailableStock(activeSizeOpt ? size : null, activeColorOpt ? color : null);
+            if (qty > currentStock) {
+                const desc = `${size !== 'Standard' ? 'size ' + size : ''}${color !== 'N/A' ? (size !== 'Standard' ? ' and ' : '') + 'color ' + color : ''}`;
+                if (window.showToast) {
+                    window.showToast(`Only ${currentStock} units available for ${desc}.`, true);
+                } else {
+                    alert(`Only ${currentStock} units available for ${desc}.`);
+                }
+                return;
+            }
+
+            // Payment gateway is not integrated yet
+            const errorMsg = 'Payment gateway is not integrated yet.';
+            if (window.showToast) {
+                window.showToast(errorMsg, true);
+            } else {
+                alert(errorMsg);
+            }
         });
     }
 }
