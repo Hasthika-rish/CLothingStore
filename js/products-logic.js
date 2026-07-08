@@ -14,7 +14,7 @@ const createProductCard = (id, data) => {
     const discount = parseFloat(data.discount || 0);
     let priceHTML = '';
     let badgeHTML = '';
-    
+
     if (discount > 0) {
         const discountedPrice = price * (1 - discount / 100);
         priceHTML = `<span style="text-decoration: line-through; color: var(--text-muted); font-size: 0.9rem; margin-right: 0.5rem;">$${price.toFixed(2)}</span><span style="font-weight: 600; color: var(--accent-color); font-size: 1.1rem;">$${discountedPrice.toFixed(2)}</span>`;
@@ -47,24 +47,40 @@ const createProductCard = (id, data) => {
 };
 
 // Fetch and render all products (for products.html and index.html)
-export async function loadProducts(limitCount = null, categoryFilter = null) {
+export async function loadProducts(limitCount = null, categoryFilter = null, tagFilter = null, searchFilter = null) {
     if (!productGrid) return;
-    
+
     productGrid.innerHTML = '<div style="text-align:center; padding: 2rem; color: #999;">Loading products...</div>';
-    
+
     try {
         const querySnapshot = await getDocs(collection(db, "products"));
         productGrid.innerHTML = '';
-        
+
         let productsHTML = '';
         let count = 0;
 
         querySnapshot.forEach((docSnap) => {
             const data = docSnap.data();
-            
+
             // Filter by category if specified
             if (categoryFilter && !data.category.toLowerCase().includes(categoryFilter.toLowerCase())) {
                 return;
+            }
+
+            // Filter by tag if specified
+            if (tagFilter && !data.category.toLowerCase().includes(tagFilter.toLowerCase())) {
+                return;
+            }
+
+            // Filter by search query if specified
+            if (searchFilter) {
+                const query = searchFilter.toLowerCase();
+                const matchesName = data.name && data.name.toLowerCase().includes(query);
+                const matchesCategory = data.category && data.category.toLowerCase().includes(query);
+                const matchesDesc = data.description && data.description.toLowerCase().includes(query);
+                if (!matchesName && !matchesCategory && !matchesDesc) {
+                    return;
+                }
             }
 
             // Enforce limit if specified
@@ -81,6 +97,40 @@ export async function loadProducts(limitCount = null, categoryFilter = null) {
             // Re-attach quick add listeners after rendering
             attachQuickAddListeners();
             if (window.updateHeartIconsState) window.updateHeartIconsState();
+        }
+
+        // Dynamically update the main <h1> header and document title in products.html based on active filters
+        const pageTitleEl = document.querySelector('main h1');
+        if (pageTitleEl) {
+            if (categoryFilter && tagFilter) {
+                const displayCategory = categoryFilter.charAt(0).toUpperCase() + categoryFilter.slice(1).toLowerCase();
+                const displayTag = tagFilter.charAt(0).toUpperCase() + tagFilter.slice(1).toLowerCase();
+                pageTitleEl.textContent = `${displayCategory}'s ${displayTag}`;
+            } else if (categoryFilter) {
+                const displayCategory = categoryFilter.charAt(0).toUpperCase() + categoryFilter.slice(1).toLowerCase();
+                pageTitleEl.textContent = `${displayCategory}'s Collection`;
+            } else if (tagFilter) {
+                const displayTag = tagFilter.charAt(0).toUpperCase() + tagFilter.slice(1).toLowerCase();
+                pageTitleEl.textContent = `${displayTag} Collection`;
+            } else if (searchFilter) {
+                pageTitleEl.textContent = `Search Results for "${searchFilter}"`;
+            } else {
+                pageTitleEl.textContent = "All Products";
+            }
+        }
+
+        if (categoryFilter || tagFilter || searchFilter) {
+            let docTitle = '';
+            if (categoryFilter && tagFilter) {
+                docTitle = `${categoryFilter.toUpperCase()} ${tagFilter.toUpperCase()}`;
+            } else if (categoryFilter) {
+                docTitle = `${categoryFilter.toUpperCase()}'S COLLECTION`;
+            } else if (tagFilter) {
+                docTitle = `${tagFilter.toUpperCase()} COLLECTION`;
+            } else if (searchFilter) {
+                docTitle = `SEARCH: ${searchFilter}`;
+            }
+            document.title = `${docTitle} | Anjiana Store`;
         }
 
     } catch (error) {
@@ -107,14 +157,14 @@ export async function loadSingleProduct() {
 
         if (docSnap.exists()) {
             const data = docSnap.data();
-            
+
             // Generate sizes HTML
             let sizesHTML = '';
             if (data.sizes && data.sizes.length > 0) {
                 sizesHTML = data.sizes.map(size => {
                     const trimmedSize = size ? size.trim() : '';
                     if (trimmedSize === '') return ''; // Prevent empty bubbles
-                    
+
                     let isOutOfStock = false;
                     if (data.sizeStock && data.sizeStock[trimmedSize] !== undefined) {
                         isOutOfStock = data.sizeStock[trimmedSize] <= 0;
@@ -146,7 +196,7 @@ export async function loadSingleProduct() {
             }
 
             const inStock = data.stock > 0;
-            const stockStatus = inStock 
+            const stockStatus = inStock
                 ? `<span style="color: var(--success-color); font-weight: 500;">In Stock (${data.stock} available)</span>`
                 : `<span style="color: var(--accent-color); font-weight: 500;">Out of Stock</span>`;
 
@@ -284,7 +334,7 @@ function attachProductDetailListeners(id, data) {
         const activeColorOpt = document.querySelector('.color-opt.active');
         const selectedSize = activeSizeOpt ? activeSizeOpt.innerText.trim() : null;
         const selectedColor = activeColorOpt ? activeColorOpt.getAttribute('data-color') : null;
-        
+
         // Update size bubbles out-of-stock state based on selected color
         if (selectedColor && data.sizeColorStock) {
             document.querySelectorAll('.size-opt').forEach(sizeOpt => {
@@ -362,7 +412,7 @@ function attachProductDetailListeners(id, data) {
         const finalColor = finalActiveColorOpt ? finalActiveColorOpt.getAttribute('data-color') : null;
 
         const currentStock = getAvailableStock(finalSize, finalColor);
-        
+
         if (qtyInput) {
             qtyInput.max = currentStock;
             if (parseInt(qtyInput.value) > currentStock && currentStock > 0) {
@@ -371,16 +421,16 @@ function attachProductDetailListeners(id, data) {
                 qtyInput.value = 0;
             }
         }
-        
+
         if (addToCartBtn) {
             const inStock = currentStock > 0;
             const originalPrice = parseFloat(data.price);
             const discount = parseFloat(data.discount || 0);
             const sellingPrice = discount > 0 ? (originalPrice * (1 - discount / 100)) : originalPrice;
-            
+
             addToCartBtn.disabled = !inStock;
             addToCartBtn.textContent = inStock ? `Add to Cart - ${formatPrice(sellingPrice)}` : 'Out of Stock';
-            
+
             if (buyNowBtn) {
                 buyNowBtn.disabled = !inStock;
                 buyNowBtn.textContent = inStock ? 'Buy Now' : 'Out of Stock';
@@ -393,7 +443,7 @@ function attachProductDetailListeners(id, data) {
     sizes.forEach(size => {
         size.addEventListener('click', () => {
             if (size.classList.contains('out-of-stock')) return; // Do nothing if out of stock
-            
+
             if (size.classList.contains('active')) {
                 size.classList.remove('active');
             } else {
@@ -409,7 +459,7 @@ function attachProductDetailListeners(id, data) {
     colors.forEach(color => {
         color.addEventListener('click', () => {
             if (color.classList.contains('out-of-stock')) return; // Do nothing if out of stock
-            
+
             if (color.classList.contains('active')) {
                 color.classList.remove('active');
             } else {
@@ -433,7 +483,7 @@ function attachProductDetailListeners(id, data) {
             const sizeVal = activeSizeOpt ? activeSizeOpt.innerText.trim() : null;
             const colorVal = activeColorOpt ? activeColorOpt.getAttribute('data-color') : null;
             const currentStock = getAvailableStock(sizeVal, colorVal);
-            
+
             if (parseInt(qtyInput.value) < currentStock) qtyInput.value++;
         });
     }
@@ -441,7 +491,7 @@ function attachProductDetailListeners(id, data) {
     if (addToCartBtn) {
         addToCartBtn.addEventListener('click', () => {
             const qty = parseInt(qtyInput.value);
-            
+
             // Validate zero or less quantity
             if (qty <= 0 || isNaN(qty)) {
                 if (window.showToast) {
@@ -455,7 +505,7 @@ function attachProductDetailListeners(id, data) {
             // Get selected size
             const activeSizeOpt = document.querySelector('.size-opt.active');
             const activeColorOpt = document.querySelector('.color-opt.active');
-            
+
             let size = 'Standard';
             if (data.sizes && data.sizes.length > 0) {
                 if (!activeSizeOpt) {
@@ -501,7 +551,7 @@ function attachProductDetailListeners(id, data) {
     if (buyNowBtn) {
         buyNowBtn.addEventListener('click', () => {
             const qty = parseInt(qtyInput.value);
-            
+
             // Validate zero or less quantity
             if (qty <= 0 || isNaN(qty)) {
                 if (window.showToast) {
@@ -515,7 +565,7 @@ function attachProductDetailListeners(id, data) {
             // Get selected size
             const activeSizeOpt = document.querySelector('.size-opt.active');
             const activeColorOpt = document.querySelector('.color-opt.active');
-            
+
             let size = 'Standard';
             if (data.sizes && data.sizes.length > 0) {
                 if (!activeSizeOpt) {
@@ -572,11 +622,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const isIndex = window.location.pathname.includes('index.html') || window.location.pathname.endsWith('/');
         const urlParams = new URLSearchParams(window.location.search);
         const category = urlParams.get('category');
-        
+        const tag = urlParams.get('tag');
+        const searchQuery = urlParams.get('q');
+
         if (isIndex) {
             loadProducts(3); // Load only 3 featured products on home page
         } else {
-            loadProducts(null, category); // Load all on products page, optionally filtered
+            loadProducts(null, category, tag, searchQuery); // Load all on products page, optionally filtered
         }
     }
 
@@ -596,7 +648,7 @@ document.addEventListener('DOMContentLoaded', () => {
 export async function loadWishlistProducts() {
     const wishlistGrid = document.getElementById('wishlistGrid');
     if (!wishlistGrid) return;
-    
+
     const list = window.getWishlist ? window.getWishlist() : [];
     if (list.length === 0) {
         wishlistGrid.innerHTML = `
@@ -611,20 +663,20 @@ export async function loadWishlistProducts() {
         `;
         return;
     }
-    
+
     wishlistGrid.innerHTML = '<div style="text-align:center; padding: 2rem; color: #999; grid-column: 1 / -1;">Loading your wishlist...</div>';
-    
+
     try {
         const querySnapshot = await getDocs(collection(db, "products"));
         wishlistGrid.innerHTML = '';
-        
+
         let productsHTML = '';
         querySnapshot.forEach((docSnap) => {
             if (list.includes(docSnap.id)) {
                 productsHTML += createProductCard(docSnap.id, docSnap.data());
             }
         });
-        
+
         if (productsHTML === '') {
             wishlistGrid.innerHTML = `
                 <div style="text-align:center; padding: 4rem 2rem; color: var(--text-muted); grid-column: 1 / -1; width: 100%;">

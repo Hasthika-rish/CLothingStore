@@ -3,7 +3,7 @@
 
 :root {
   /* Elegant Color Palette */
-  --primary-color: #9F5D44;     /* Terracotta from mood board */
+  --primary-color: #000000;      /* Black text in light mode */
   --secondary-color: #FFFFFF;    /* Pure White */
   --accent-color: #9F5D44;       /* Terracotta from mood board */
   --bg-color: #FFFFFF;           /* White as main background color */
@@ -15,8 +15,8 @@
   
   /* Palette definitions for flexible usage */
   --color-terracotta: #9F5D44;
-  --color-green: #7B7E4B;
-  --color-golden-olive: #B09121;
+  --color-green: #1E7C3A;        /* Vibrant modern green */
+  --color-golden-olive: #178033; /* Darker green for hover states */
   
   /* Transitions */
   --transition-fast: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -36,7 +36,7 @@
 }
 
 [data-theme="dark"] {
-  --primary-color: #FFFFFF;     
+  --primary-color: #FFFFFF;     /* White text in dark mode */
   --secondary-color: #1D211A;   /* Deep Forest Green */
   --accent-color: #D2937A;      /* Light terracotta tint for readability */
   --bg-color: #1D211A;          /* Deep Forest Green */
@@ -165,25 +165,25 @@ img { max-width: 100%; height: auto; display: block; }
   transform: translateY(1px);
 }
 .btn-primary {
-  background: var(--color-green);
+  background: #1E7C3A;
   color: #FFFFFF;
-  border: 1px solid var(--color-green);
+  border: 1px solid #1E7C3A;
 }
 [data-theme="dark"] .btn-primary {
-  background: var(--color-green);
+  background: #1E7C3A;
   color: #FFFFFF;
-  border: 1px solid var(--color-green);
+  border: 1px solid #1E7C3A;
 }
 .btn-primary:hover {
   transform: translateY(-2px);
-  background: var(--color-golden-olive);
-  border-color: var(--color-golden-olive);
-  box-shadow: 0 8px 20px rgba(123, 126, 75, 0.2);
+  background: #178033;
+  border-color: #178033;
+  box-shadow: 0 8px 20px rgba(30, 124, 58, 0.3);
 }
 [data-theme="dark"] .btn-primary:hover {
-  background: var(--color-golden-olive);
-  border-color: var(--color-golden-olive);
-  box-shadow: 0 8px 20px rgba(123, 126, 75, 0.2);
+  background: #178033;
+  border-color: #178033;
+  box-shadow: 0 8px 20px rgba(30, 124, 58, 0.3);
 }
 .btn-secondary {
   background: transparent;
@@ -191,24 +191,25 @@ img { max-width: 100%; height: auto; display: block; }
   border: 1px solid var(--border-color);
 }
 .btn-secondary:hover {
-  background: rgba(123, 126, 75, 0.05);
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+  background: rgba(30, 124, 58, 0.06);
+  border-color: #1E7C3A;
+  color: #1E7C3A;
 }
 [data-theme="dark"] .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: #fff;
+  background: rgba(30, 124, 58, 0.1);
+  border-color: #3ecf6a;
+  color: #3ecf6a;
 }
 .btn-accent {
-  background: linear-gradient(135deg, var(--color-golden-olive) 0%, var(--accent-color) 100%);
+  background: linear-gradient(135deg, #178033 0%, #1E7C3A 100%);
   color: #FFFFFF;
   font-weight: 700;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 15px rgba(159, 93, 68, 0.2);
+  box-shadow: 0 4px 15px rgba(30, 124, 58, 0.2);
 }
 .btn-accent:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(159, 93, 68, 0.45);
+  box-shadow: 0 8px 25px rgba(30, 124, 58, 0.45);
 }
 
 /* Premium Animated Live Clock */
