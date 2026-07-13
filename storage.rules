@@ -14,6 +14,11 @@ service firebase.storage {
       // Only authenticated users (Admins) can upload/delete images
       allow write: if isAuthenticated();
     }
+
+    match /payment_slips/{userId}/{orderId} {
+      // Anyone can read and write bank slips
+      allow read, write: if true;
+    }
     
     // Default rule for other buckets
     match /{allPaths=**} {

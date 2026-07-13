@@ -1,12 +1,25 @@
-import { db, collection, getDocs, doc, getDoc } from './firebase-config.js';
+import { db, collection, getDocs, doc, getDoc, addDoc, getCachedSettings } from './firebase-config.js';
+import { query, where } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore.js";
 import { addToCart } from './cart.js';
 
 // DOM Elements
 const productGrid = document.getElementById('productGrid');
 const productDetailsContainer = document.getElementById('productDetails');
 
+let activeCurrency = 'Rs.';
+
+// Async helper to initialize currency symbol from Firestore settings
+async function initCurrency() {
+    try {
+        const settings = await getCachedSettings();
+        activeCurrency = settings.currency || 'Rs.';
+    } catch (e) {
+        console.error("Error setting currency: ", e);
+    }
+}
+
 // Helper to format currency
-const formatPrice = (price) => `$${parseFloat(price).toFixed(2)}`;
+const formatPrice = (price) => `${activeCurrency}${parseFloat(price).toFixed(2)}`;
 
 // Helper to generate a product card HTML
 const createProductCard = (id, data) => {
@@ -17,10 +30,10 @@ const createProductCard = (id, data) => {
 
     if (discount > 0) {
         const discountedPrice = price * (1 - discount / 100);
-        priceHTML = `<span style="text-decoration: line-through; color: var(--text-muted); font-size: 0.9rem; margin-right: 0.5rem;">$${price.toFixed(2)}</span><span style="font-weight: 600; color: var(--accent-color); font-size: 1.1rem;">$${discountedPrice.toFixed(2)}</span>`;
+        priceHTML = `<span style="text-decoration: line-through; color: var(--text-muted); font-size: 0.9rem; margin-right: 0.5rem;">${activeCurrency}${price.toFixed(2)}</span><span style="font-weight: 600; color: var(--accent-color); font-size: 1.1rem;">${activeCurrency}${discountedPrice.toFixed(2)}</span>`;
         badgeHTML = `<span style="position: absolute; top: 12px; left: 12px; background: var(--accent-color); color: #FFFFFF; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; z-index: 2; box-shadow: 0 4px 10px rgba(0,0,0,0.15); font-family: 'Outfit', sans-serif;">-${discount}%</span>`;
     } else {
-        priceHTML = `<span style="font-weight: 600; font-size: 1.1rem;">$${price.toFixed(2)}</span>`;
+        priceHTML = `<span style="font-weight: 600; font-size: 1.1rem;">${activeCurrency}${price.toFixed(2)}</span>`;
     }
 
     return `
@@ -51,6 +64,8 @@ export async function loadProducts(limitCount = null, categoryFilter = null, tag
     if (!productGrid) return;
 
     productGrid.innerHTML = '<div style="text-align:center; padding: 2rem; color: #999;">Loading products...</div>';
+
+    await initCurrency();
 
     try {
         const querySnapshot = await getDocs(collection(db, "products"));
@@ -130,7 +145,7 @@ export async function loadProducts(limitCount = null, categoryFilter = null, tag
             } else if (searchFilter) {
                 docTitle = `SEARCH: ${searchFilter}`;
             }
-            document.title = `${docTitle} | Anjiana Store`;
+            document.title = `${docTitle} | Sage Anjiana`;
         }
 
     } catch (error) {
@@ -150,6 +165,8 @@ export async function loadSingleProduct() {
         productDetailsContainer.innerHTML = '<h2>Product not found.</h2>';
         return;
     }
+
+    await initCurrency();
 
     try {
         const docRef = doc(db, "products", productId);
@@ -208,13 +225,13 @@ export async function loadSingleProduct() {
                 sellingPrice = price * (1 - discount / 100);
                 priceHTML = `
                     <div style="display: flex; align-items: baseline; gap: 0.75rem; margin-bottom: 1rem;">
-                        <span style="text-decoration: line-through; color: var(--text-muted); font-size: 1.25rem;">$${price.toFixed(2)}</span>
-                        <span style="font-weight: 700; color: var(--accent-color); font-size: 1.8rem;">$${sellingPrice.toFixed(2)}</span>
+                        <span style="text-decoration: line-through; color: var(--text-muted); font-size: 1.25rem;">${activeCurrency}${price.toFixed(2)}</span>
+                        <span style="font-weight: 700; color: var(--accent-color); font-size: 1.8rem;">${activeCurrency}${sellingPrice.toFixed(2)}</span>
                         <span style="background: rgba(159, 93, 68, 0.15); color: var(--accent-color); padding: 4px 10px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">SAVE ${discount}%</span>
                     </div>
                 `;
             } else {
-                priceHTML = `<p class="product-price-lg" style="font-size: 1.8rem; font-weight: 700; color: var(--primary-color); margin-bottom: 1rem;">$${price.toFixed(2)}</p>`;
+                priceHTML = `<p class="product-price-lg" style="font-size: 1.8rem; font-weight: 700; color: var(--primary-color); margin-bottom: 1rem;">${activeCurrency}${price.toFixed(2)}</p>`;
             }
 
             productDetailsContainer.innerHTML = `
@@ -282,6 +299,9 @@ export async function loadSingleProduct() {
 
             // Attach event listeners for dynamic elements
             attachProductDetailListeners(docSnap.id, data);
+
+            // Load product reviews section dynamically
+            loadProductReviews(docSnap.id, data.name);
 
         } else {
             productDetailsContainer.innerHTML = '<h2>Product not found.</h2>';
@@ -604,14 +624,84 @@ function attachProductDetailListeners(id, data) {
                 return;
             }
 
-            // Payment gateway is not integrated yet
-            const errorMsg = 'Payment gateway is not integrated yet.';
-            if (window.showToast) {
-                window.showToast(errorMsg, true);
-            } else {
-                alert(errorMsg);
-            }
+            // Call Quick Checkout modal
+            openBuyNowModal(id, data, size, qty, color);
         });
+    }
+}
+
+// Dynamic Category loader
+async function loadStorefrontCategories() {
+    const container = document.getElementById('categoriesContainer');
+    if (!container) return;
+
+    // Helper to map default categories to their original storefront assets
+    const getCategoryImage = (parentName, subName, dbImage) => {
+        const p = parentName.toLowerCase().trim();
+        const s = subName.toLowerCase().trim();
+        
+        if (p === 'women') {
+            if (s === 'new') return 'images/women_new.png';
+            if (s === 'everyday') return 'images/women_everyday.png';
+            if (s === 'night out' || s === 'nightout') return 'images/women_nightout.png';
+            if (s === 'essentials') return 'images/women_essentials.png';
+            if (s === 'for the occasion' || s === 'occasion') return 'images/women_occasion.png';
+        } else if (p === 'men') {
+            if (s === 'new') return 'images/men_new.png';
+            if (s === 'everyday') return 'images/men_everyday.png';
+            if (s === 'night out' || s === 'nightout') return 'images/men_nightout.png';
+            if (s === 'essentials') return 'images/men_essentials.png';
+            if (s === 'for the occasion' || s === 'occasion') return 'images/men_occasion.png';
+        }
+        return dbImage || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=200';
+    };
+
+    try {
+        const snap = await getDocs(collection(db, "categories"));
+        const allCats = [];
+        snap.forEach(docSnap => {
+            allCats.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        // Filter parent categories (parent == "")
+        const parents = allCats.filter(c => !c.parent);
+        
+        if (parents.length === 0) return;
+
+        // Clear container
+        container.innerHTML = '';
+
+        parents.forEach((parent, index) => {
+            // Find all subcategories for this parent
+            const subcategories = allCats.filter(c => c.parent === parent.name);
+            if (subcategories.length === 0) return; // Skip if no subcategories
+
+            const block = document.createElement('div');
+            block.className = 'category-block';
+            if (index > 0) {
+                block.style.marginTop = '5rem';
+            }
+
+            block.innerHTML = `
+                <h2 class="category-block-title">${parent.name}</h2>
+                <div class="category-grid">
+                    ${subcategories.map(sub => {
+                        const imgSrc = getCategoryImage(parent.name, sub.name, sub.image);
+                        return `
+                            <a href="products.html?category=${parent.name.toLowerCase()}&tag=${sub.name.toLowerCase()}" class="category-card">
+                                <div class="category-img-wrap">
+                                    <img src="${imgSrc}" alt="${sub.name}" class="category-img">
+                                </div>
+                                <h3 class="category-title">${sub.name}</h3>
+                            </a>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+            container.appendChild(block);
+        });
+    } catch (err) {
+        console.error("Error loading categories dynamically:", err);
     }
 }
 
@@ -627,6 +717,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isIndex) {
             loadProducts(3); // Load only 3 featured products on home page
+            loadStorefrontCategories(); // Load categories dynamically from Firestore
         } else {
             loadProducts(null, category, tag, searchQuery); // Load all on products page, optionally filtered
         }
@@ -648,6 +739,8 @@ document.addEventListener('DOMContentLoaded', () => {
 export async function loadWishlistProducts() {
     const wishlistGrid = document.getElementById('wishlistGrid');
     if (!wishlistGrid) return;
+
+    await initCurrency();
 
     const list = window.getWishlist ? window.getWishlist() : [];
     if (list.length === 0) {
@@ -696,3 +789,453 @@ export async function loadWishlistProducts() {
     }
 }
 window.loadWishlistProducts = loadWishlistProducts;
+
+// Fetch, calculate summary, and render product reviews dynamically
+export async function loadProductReviews(productId, productName) {
+    const reviewsSection = document.getElementById('productReviewsSection');
+    if (!reviewsSection) return;
+
+    reviewsSection.innerHTML = '<div style="text-align:center; padding: 2rem; color: var(--text-muted);">Loading reviews...</div>';
+
+    try {
+        // Query approved reviews for this product
+        const q = query(
+            collection(db, "reviews"),
+            where("productId", "==", productId),
+            where("status", "==", "Approved")
+        );
+        const querySnapshot = await getDocs(q);
+
+        let reviews = [];
+        let totalRating = 0;
+        
+        querySnapshot.forEach(docSnap => {
+            const rData = docSnap.data();
+            reviews.push({ id: docSnap.id, ...rData });
+            totalRating += rData.rating;
+        });
+
+        // Sort reviews by date descending (newest first)
+        reviews.sort((a, b) => {
+            const dateA = a.createdAt ? (a.createdAt.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt).getTime()) : 0;
+            const dateB = b.createdAt ? (b.createdAt.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt).getTime()) : 0;
+            return dateB - dateA;
+        });
+
+        const numReviews = reviews.length;
+        const avgRating = numReviews > 0 ? (totalRating / numReviews).toFixed(1) : 0;
+
+        // Render reviews section header & summary
+        let summaryHTML = '';
+        let listHTML = '';
+
+        if (numReviews > 0) {
+            const starsHTML = '⭐'.repeat(Math.round(avgRating)) + '☆'.repeat(5 - Math.round(avgRating));
+            
+            // Build rating breakdown bar percentages
+            let starsCount = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+            reviews.forEach(r => {
+                if (starsCount[r.rating] !== undefined) starsCount[r.rating]++;
+            });
+
+            summaryHTML = `
+                <div class="reviews-summary-container">
+                    <div class="reviews-rating-value-box">
+                        <div class="avg-rating-big">${avgRating}</div>
+                        <div class="avg-rating-stars">${starsHTML}</div>
+                        <p class="avg-rating-count">Based on ${numReviews} review${numReviews > 1 ? 's' : ''}</p>
+                    </div>
+                    <div class="reviews-rating-bars-box">
+                        ${[5, 4, 3, 2, 1].map(star => {
+                            const count = starsCount[star];
+                            const pct = numReviews > 0 ? ((count / numReviews) * 100).toFixed(0) : 0;
+                            return `
+                                <div class="rating-bar-row">
+                                    <span class="rating-bar-label">${star} star</span>
+                                    <div class="rating-bar-bg">
+                                        <div class="rating-bar-fill" style="width: ${pct}%;"></div>
+                                    </div>
+                                    <span class="rating-bar-pct">${pct}%</span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            // Build reviews list
+            listHTML = `
+                <div class="reviews-list-container">
+                    ${reviews.map(r => {
+                        const rStars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+                        const rDate = r.createdAt ? new Date(r.createdAt.seconds ? r.createdAt.seconds * 1000 : r.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+                        
+                        let replyHTML = '';
+                        if (r.reply) {
+                            replyHTML = `
+                                <div class="review-reply-bubble">
+                                    <div class="reply-header">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="reply-icon" style="margin-right: 6px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                        <strong>Store Response</strong>
+                                    </div>
+                                    <p class="reply-body">${r.reply}</p>
+                                </div>
+                            `;
+                        }
+
+                        return `
+                            <div class="review-card">
+                                <div class="review-header">
+                                    <div class="review-meta-info">
+                                        <h4 class="reviewer-name">${r.customerName}</h4>
+                                        <div class="review-stars-static">${rStars}</div>
+                                    </div>
+                                    <span class="review-date">${rDate}</span>
+                                </div>
+                                <p class="review-comment">"${r.comment}"</p>
+                                ${replyHTML}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        } else {
+            summaryHTML = `
+                <div class="no-reviews-placeholder">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="no-rev-icon"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <h3>No reviews yet</h3>
+                    <p>Be the first to share your thoughts about this product!</p>
+                </div>
+            `;
+        }
+
+        // Write a Review Form HTML
+        const formHTML = `
+            <div class="write-review-container">
+                <h3 class="write-review-title">Write a Review</h3>
+                <form id="addReviewForm" class="add-review-form">
+                    <div class="form-group">
+                        <label for="reviewName" class="form-label">Your Name</label>
+                        <input type="text" id="reviewName" class="form-control" placeholder="e.g. John Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Your Rating</label>
+                        <div class="star-rating-selector">
+                            <input type="radio" id="star5" name="reviewRating" value="5" required /><label for="star5" title="5 stars">★</label>
+                            <input type="radio" id="star4" name="reviewRating" value="4" /><label for="star4" title="4 stars">★</label>
+                            <input type="radio" id="star3" name="reviewRating" value="3" /><label for="star3" title="3 stars">★</label>
+                            <input type="radio" id="star2" name="reviewRating" value="2" /><label for="star2" title="2 stars">★</label>
+                            <input type="radio" id="star1" name="reviewRating" value="1" /><label for="star1" title="1 star">★</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reviewComment" class="form-label">Review Comment</label>
+                        <textarea id="reviewComment" class="form-control" rows="4" placeholder="Share your experience with this product..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; margin-top: 1rem;">Submit Review</button>
+                </form>
+            </div>
+        `;
+
+        reviewsSection.innerHTML = `
+            <div class="reviews-layout-grid">
+                <div class="reviews-display-column">
+                    <h2 class="reviews-section-title">Customer Reviews</h2>
+                    ${summaryHTML}
+                    ${listHTML}
+                </div>
+                <div class="reviews-form-column">
+                    ${formHTML}
+                </div>
+            </div>
+        `;
+
+        // Attach Submit Event Listener
+        const reviewForm = document.getElementById('addReviewForm');
+        if (reviewForm) {
+            reviewForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('reviewName').value.trim();
+                const comment = document.getElementById('reviewComment').value.trim();
+                
+                // Get selected rating
+                const ratingRadio = document.querySelector('input[name="reviewRating"]:checked');
+                if (!ratingRadio) {
+                    if (window.showToast) {
+                        window.showToast("Please select a star rating.", true);
+                    } else {
+                        alert("Please select a star rating.");
+                    }
+                    return;
+                }
+                const rating = parseInt(ratingRadio.value);
+
+                const submitBtn = reviewForm.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Submitting...';
+
+                try {
+                    const reviewData = {
+                        productId: productId,
+                        productName: productName,
+                        customerName: name,
+                        rating: rating,
+                        comment: comment,
+                        status: "Pending", // Moderation default
+                        reply: "",
+                        createdAt: new Date()
+                    };
+
+                    await addDoc(collection(db, "reviews"), reviewData);
+                    
+                    const successMsg = "Thank you! Your review has been submitted for moderation.";
+                    if (window.showToast) {
+                        window.showToast(successMsg, false);
+                    } else {
+                        alert(successMsg);
+                    }
+
+                    // Reset form and re-enable submit btn
+                    reviewForm.reset();
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Review';
+
+                } catch (err) {
+                    console.error("Error submitting review:", err);
+                    const errorMsg = "Failed to submit review. Please try again.";
+                    if (window.showToast) {
+                        window.showToast(errorMsg, true);
+                    } else {
+                        alert(errorMsg);
+                    }
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Review';
+                }
+            });
+        }
+
+    } catch (error) {
+        console.error("Error loading product reviews:", error);
+        reviewsSection.innerHTML = '<div style="text-align:center; padding: 2rem; color: red;">Failed to load reviews.</div>';
+    }
+}
+
+function openBuyNowModal(prodId, data, size, qty, color) {
+    const existing = document.getElementById('buyNowModal');
+    if (existing) existing.remove();
+
+    const originalPrice = parseFloat(data.price);
+    const discount = parseFloat(data.discount || 0);
+    const sellingPrice = discount > 0 ? (originalPrice * (1 - discount / 100)) : originalPrice;
+    const totalAmount = sellingPrice * qty;
+
+    const modal = document.createElement('div');
+    modal.id = 'buyNowModal';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.background = 'rgba(0, 0, 0, 0.6)';
+    modal.style.zIndex = '1000';
+    modal.style.display = 'flex';
+    modal.style.justifyContent = 'center';
+    modal.style.alignItems = 'center';
+    modal.style.backdropFilter = 'blur(4px)';
+    modal.style.fontFamily = "'Outfit', sans-serif";
+
+    const isDark = document.body.classList.contains('dark') || document.documentElement.getAttribute('data-theme') === 'dark';
+    const bgColor = isDark ? '#282D24' : '#FFFFFF';
+    const textColor = isDark ? '#FFFFFF' : '#000000';
+    const cardBgColor = isDark ? '#1D211A' : '#F8F9FA';
+    const borderColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(159, 93, 68, 0.15)';
+    const textMutedColor = isDark ? '#A3A79A' : '#7B7E4B';
+
+    modal.innerHTML = `
+        <div style="
+            background: ${bgColor};
+            color: ${textColor};
+            max-width: 500px;
+            width: 95%;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            position: relative;
+            box-sizing: border-box;
+            border: 1px solid ${borderColor};
+            animation: modalFadeIn 0.3s ease;
+        ">
+            <button id="closeBuyNowModal" style="
+                position: absolute;
+                top: 1rem; right: 1rem;
+                background: none; border: none;
+                font-size: 1.5rem; cursor: pointer;
+                color: ${textMutedColor};
+            ">&times;</button>
+            
+            <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem; font-weight: 700; text-align: center;">Quick Checkout</h3>
+            <p style="color: ${textMutedColor}; text-align: center; font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.4;">
+                You are buying <strong>${data.name}</strong><br>
+                Size: <span style="color: var(--accent-color); font-weight: 600;">${size}</span> 
+                ${color !== 'N/A' ? `• Color: <span style="background: ${color}; display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: middle; border: 1px solid #ccc;"></span>` : ''} 
+                • Qty: <span style="font-weight: 600;">${qty}</span>
+            </p>
+
+            <div id="buyNowPaymentSelection">
+                <p style="font-weight: 600; margin-bottom: 1rem; text-align: center; font-size: 0.95rem;">Select Payment Option:</p>
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 1rem;">
+                    <button id="btnSelectCOD" style="
+                        display: flex; justify-content: space-between; align-items: center;
+                        padding: 1.2rem; background: ${cardBgColor};
+                        border: 1px solid ${borderColor}; border-radius: 8px;
+                        cursor: pointer; text-align: left; transition: all 0.2s;
+                        color: ${textColor};
+                    ">
+                        <div>
+                            <strong style="display: block; font-size: 1rem; margin-bottom: 4px; color: ${textColor};">Cash on Delivery (COD)</strong>
+                            <span style="font-size: 0.8rem; color: ${textMutedColor};">Pay cash upon delivery to your address.</span>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                    <button id="btnSelectDeposit" style="
+                        display: flex; justify-content: space-between; align-items: center;
+                        padding: 1.2rem; background: ${cardBgColor};
+                        border: 1px solid ${borderColor}; border-radius: 8px;
+                        cursor: pointer; text-align: left; transition: all 0.2s;
+                        color: ${textColor};
+                    ">
+                        <div>
+                            <strong style="display: block; font-size: 1rem; margin-bottom: 4px; color: ${textColor};">Cash Deposit / Bank Transfer</strong>
+                            <span style="font-size: 0.8rem; color: ${textMutedColor};">Pay via bank deposit and upload slip to confirm.</span>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="buyNowCODForm" style="display: none;">
+                <h4 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: var(--accent-color); text-align: center;">Delivery Information</h4>
+                <form id="codQuickCheckoutForm" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label style="font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 4px; color: ${textColor};">First Name</label>
+                            <input type="text" id="quickFname" class="form-control" required style="width: 100%; height: 38px; border-radius: 4px; border: 1px solid ${borderColor}; background: ${cardBgColor}; color: ${textColor}; padding: 0 10px;">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label style="font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 4px; color: ${textColor};">Last Name</label>
+                            <input type="text" id="quickLname" class="form-control" required style="width: 100%; height: 38px; border-radius: 4px; border: 1px solid ${borderColor}; background: ${cardBgColor}; color: ${textColor}; padding: 0 10px;">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label style="font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 4px; color: ${textColor};">Phone Number</label>
+                        <input type="tel" id="quickPhone" class="form-control" required style="width: 100%; height: 38px; border-radius: 4px; border: 1px solid ${borderColor}; background: ${cardBgColor}; color: ${textColor}; padding: 0 10px;">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label style="font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 4px; color: ${textColor};">Delivery Address</label>
+                        <textarea id="quickAddress" class="form-control" required style="width: 100%; height: 70px; border-radius: 4px; border: 1px solid ${borderColor}; background: ${cardBgColor}; color: ${textColor}; padding: 8px 10px; font-family: inherit; resize: none;"></textarea>
+                    </div>
+                    
+                    <button type="submit" id="btnQuickSubmit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 0.5rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1rem;">
+                        Confirm Purchase
+                    </button>
+                    <button type="button" id="btnBackToSelection" style="background: none; border: none; color: var(--accent-color); font-size: 0.85rem; cursor: pointer; text-decoration: underline; margin-top: 4px; font-weight: 500;">
+                        Back to Payment Methods
+                    </button>
+                </form>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    document.getElementById('closeBuyNowModal').onclick = () => modal.remove();
+    
+    const selectionDiv = document.getElementById('buyNowPaymentSelection');
+    const codFormDiv = document.getElementById('buyNowCODForm');
+    const backBtn = document.getElementById('btnBackToSelection');
+    
+    document.getElementById('btnSelectCOD').onclick = () => {
+        selectionDiv.style.display = 'none';
+        codFormDiv.style.display = 'block';
+    };
+
+    document.getElementById('btnSelectDeposit').onclick = () => {
+        addToCart(data, size, qty, color);
+        window.location.href = 'checkout.html';
+        modal.remove();
+    };
+
+    backBtn.onclick = () => {
+        codFormDiv.style.display = 'none';
+        selectionDiv.style.display = 'block';
+    };
+
+    document.getElementById('codQuickCheckoutForm').onsubmit = async (e) => {
+        e.preventDefault();
+        
+        const submitBtn = document.getElementById('btnQuickSubmit');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Placing Order...";
+
+        try {
+            const customer = {
+                firstName: document.getElementById('quickFname').value.trim(),
+                lastName: document.getElementById('quickLname').value.trim(),
+                phone: document.getElementById('quickPhone').value.trim(),
+                address: document.getElementById('quickAddress').value.trim(),
+                city: '',
+                district: '',
+                postalCode: '',
+                email: ''
+            };
+
+            let shipping = 10;
+            try {
+                const rulesSnap = await getDoc(doc(db, "settings", "shipping_rules"));
+                if (rulesSnap.exists()) {
+                    const rules = rulesSnap.data();
+                    const threshold = rules.freeShippingThreshold !== undefined ? rules.freeShippingThreshold : 150;
+                    const standardFee = rules.standardFee !== undefined ? rules.standardFee : 10;
+                    shipping = totalAmount > threshold ? 0 : standardFee;
+                }
+            } catch (errRules) {
+                console.error("Error loading rules:", errRules);
+                shipping = totalAmount > 150 ? 0 : 10;
+            }
+
+            const orderItem = {
+                id: prodId,
+                name: data.name,
+                price: sellingPrice,
+                imageUrl: data.imageUrl || 'images/placeholder.png',
+                size: size,
+                color: color,
+                quantity: qty
+            };
+
+            const order = {
+                customer,
+                items: [orderItem],
+                subtotal: totalAmount,
+                shipping: shipping,
+                totalAmount: totalAmount + shipping,
+                paymentMethod: 'COD',
+                paymentStatus: 'PENDING',
+                orderStatus: 'Pending',
+                createdAt: new Date()
+            };
+
+            const docRef = await addDoc(collection(db, "orders"), order);
+            modal.remove();
+            
+            alert(`Order placed successfully! Order ID: ${docRef.id}`);
+            window.location.href = `order-details.html?id=${docRef.id}`;
+
+        } catch (err) {
+            console.error("Error creating quick order:", err);
+            alert("There was an error placing your order. Please try again.");
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Confirm Purchase";
+        }
+    };
+}

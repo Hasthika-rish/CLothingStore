@@ -27,3 +27,40 @@ export {
   auth, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail,
   storage, ref, uploadBytes, getDownloadURL
 };
+
+// Caching helper for general store settings
+export async function getCachedSettings() {
+    let settings = sessionStorage.getItem('store_settings');
+    if (!settings) {
+        try {
+            const docRef = doc(db, "settings", "store_info");
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                settings = JSON.stringify(docSnap.data());
+                sessionStorage.setItem('store_settings', settings);
+            }
+        } catch (e) {
+            console.error("Error fetching settings: ", e);
+        }
+    }
+    return settings ? JSON.parse(settings) : { currency: "Rs.", taxRate: 0 };
+}
+
+// Caching helper for shipping rules settings
+export async function getCachedShippingRules() {
+    let rules = sessionStorage.getItem('shipping_rules');
+    if (!rules) {
+        try {
+            const docRef = doc(db, "settings", "shipping_rules");
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                rules = JSON.stringify(docSnap.data());
+                sessionStorage.setItem('shipping_rules', rules);
+            }
+        } catch (e) {
+            console.error("Error fetching shipping rules: ", e);
+        }
+    }
+    return rules ? JSON.parse(rules) : { standardFee: 10, expressFee: 25, freeShippingThreshold: 150 };
+}
+

@@ -51,13 +51,15 @@ window.addEventListener('scroll', () => {
     const alphaBg = theme === 'dark' ? 'rgba(18, 18, 18, 0.95)' : 'rgba(255, 255, 255, 0.95)';
     const defaultAlphaBg = theme === 'dark' ? 'rgba(18, 18, 18, 0.85)' : 'rgba(255, 255, 255, 0.85)';
     
-    if(window.scrollY > 50) {
-        navbar.style.background = alphaBg;
-        navbar.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
-    } else {
-        navbar.style.background = defaultAlphaBg;
-        navbar.style.boxShadow = 'none';
-        navbar.style.borderBottom = '1px solid rgba(0,0,0,0.05)';
+    if (navbar) {
+        if(window.scrollY > 50) {
+            navbar.style.background = alphaBg;
+            navbar.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
+        } else {
+            navbar.style.background = defaultAlphaBg;
+            navbar.style.boxShadow = 'none';
+            navbar.style.borderBottom = '1px solid rgba(0,0,0,0.05)';
+        }
     }
 });
 
@@ -222,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="drawer-overlay" id="drawerOverlay"></div>
                 <div class="mobile-drawer" id="mobileDrawer">
                     <div class="drawer-header">
-                        <div class="logo">Anjiana Store</div>
+                        <div class="logo">Sage Anjiana</div>
                         <button class="drawer-close" id="drawerClose">✕</button>
                     </div>
                     <ul class="drawer-links">
@@ -279,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 mobileHeader.className = 'admin-mobile-header';
                 mobileHeader.innerHTML = `
                     <button class="admin-sidebar-toggle" id="adminSidebarToggle">☰</button>
-                    <div class="admin-mobile-logo">Anjiana Admin</div>
+                    <div class="admin-mobile-logo">Sage Anjiana Admin</div>
                     <div style="width: 24px;"></div>
                 `;
                 // Insert before the first child of adminLayout

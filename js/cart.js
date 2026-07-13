@@ -1,13 +1,15 @@
+import { getCachedSettings, getCachedShippingRules } from './firebase-config.js';
+
 // Cart Management Logic using Local Storage
 
 // Initialize cart from local storage
 export function getCart() {
-    const cart = localStorage.getItem('Anjiana Store_cart');
+    const cart = localStorage.getItem('Sage Anjiana_cart');
     return cart ? JSON.parse(cart) : [];
 }
 
 export function saveCart(cart) {
-    localStorage.setItem('Anjiana Store_cart', JSON.stringify(cart));
+    localStorage.setItem('Sage Anjiana_cart', JSON.stringify(cart));
     updateCartBadge();
 }
 
@@ -47,19 +49,19 @@ export function addToCart(product, size, quantity, color = 'N/A') {
     }
 }
 
-export function removeFromCart(index) {
+export async function removeFromCart(index) {
     const cart = getCart();
     cart.splice(index, 1);
     saveCart(cart);
-    renderCart(); // Re-render if on cart page
+    await renderCart(); // Re-render if on cart page
 }
 
-export function updateQuantity(index, newQuantity) {
+export async function updateQuantity(index, newQuantity) {
     const cart = getCart();
     if (newQuantity < 1) return;
     cart[index].quantity = newQuantity;
     saveCart(cart);
-    renderCart();
+    await renderCart();
 }
 
 export function updateCartBadge() {
@@ -74,7 +76,7 @@ export function updateCartBadge() {
 }
 
 // Render Cart on cart.html
-export function renderCart() {
+export async function renderCart() {
     const cartItemsContainer = document.getElementById('cartItems');
     const cartSubtotal = document.getElementById('cartSubtotal');
     const cartTotal = document.getElementById('cartTotal');
@@ -85,10 +87,15 @@ export function renderCart() {
     const cart = getCart();
     cartItemsContainer.innerHTML = '';
 
+    // Fetch dynamic settings and rules
+    const settings = await getCachedSettings();
+    const activeCurrency = settings.currency || 'Rs.';
+    const rules = await getCachedShippingRules();
+
     if (cart.length === 0) {
-        cartItemsContainer.innerHTML = '<p style="text-align: center; padding: 2rem;">Your cart is empty. <a href="products.html" style="color: var(--primary-color);">Continue Shopping</a></p>';
-        if (cartSubtotal) cartSubtotal.innerText = '$0.00';
-        if (cartTotal) cartTotal.innerText = '$0.00';
+        cartItemsContainer.innerHTML = `<p style="text-align: center; padding: 2rem;">Your cart is empty. <a href="products.html" style="color: var(--primary-color);">Continue Shopping</a></p>`;
+        if (cartSubtotal) cartSubtotal.innerText = `${activeCurrency}0.00`;
+        if (cartTotal) cartTotal.innerText = `${activeCurrency}0.00`;
         if (checkoutBtn) checkoutBtn.style.display = 'none';
         return;
     }
@@ -108,10 +115,10 @@ export function renderCart() {
                     <div>
                         <div style="display: flex; justify-content: space-between;">
                             <h3 style="font-size: 1.1rem;"><a href="product-details.html?id=${item.id}">${item.name}</a></h3>
-                            <div style="font-weight: 500;">$${itemTotal.toFixed(2)}</div>
+                            <div style="font-weight: 500;">${activeCurrency}${itemTotal.toFixed(2)}</div>
                         </div>
                         <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem;">Size: ${item.size || 'N/A'}${item.color && item.color !== 'N/A' ? ` • Color: ${item.color}` : ''}</p>
-                        <p style="color: var(--text-muted); font-size: 0.9rem;">$${parseFloat(item.price).toFixed(2)} each</p>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">${activeCurrency}${parseFloat(item.price).toFixed(2)} each</p>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
                         <div style="display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: 4px; overflow: hidden;">
@@ -127,13 +134,17 @@ export function renderCart() {
         cartItemsContainer.insertAdjacentHTML('beforeend', cartItemHTML);
     });
 
-    if (cartSubtotal) cartSubtotal.innerText = `$${total.toFixed(2)}`;
-    // Assuming flat shipping of $10 for example, or free if over $100
-    const shipping = total > 100 ? 0 : 10;
-    const shippingElem = document.getElementById('cartShipping');
-    if (shippingElem) shippingElem.innerText = shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`;
+    if (cartSubtotal) cartSubtotal.innerText = `${activeCurrency}${total.toFixed(2)}`;
     
-    if (cartTotal) cartTotal.innerText = `$${(total + shipping).toFixed(2)}`;
+    // Standard shipping from settings rules
+    const threshold = rules.freeShippingThreshold !== undefined ? rules.freeShippingThreshold : 150;
+    const standardFee = rules.standardFee !== undefined ? rules.standardFee : 10;
+    const shipping = total > threshold ? 0 : standardFee;
+    
+    const shippingElem = document.getElementById('cartShipping');
+    if (shippingElem) shippingElem.innerText = shipping === 0 ? 'Free' : `${activeCurrency}${shipping.toFixed(2)}`;
+    
+    if (cartTotal) cartTotal.innerText = `${activeCurrency}${(total + shipping).toFixed(2)}`;
 
     // Attach event listeners for buttons
     attachCartListeners();
@@ -165,7 +176,7 @@ function attachCartListeners() {
 }
 
 // Ensure cart badge is updated on all pages
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     updateCartBadge();
-    renderCart(); // Will only execute if cartItems container exists
+    await renderCart(); // Will only execute if cartItems container exists
 });

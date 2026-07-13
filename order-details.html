@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Details & Tracking | Sage Anjiana</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .order-status-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .status-pending { background: rgba(159, 93, 68, 0.15); color: var(--accent-color); }
+    .status-processing { background: rgba(30, 124, 58, 0.1); color: var(--success-color); }
+    .status-shipped { background: rgba(30, 124, 58, 0.1); color: var(--success-color); }
+    .status-delivered { background: #1E7C3A; color: #FFFFFF; }
+    .status-cancelled { background: rgba(0, 0, 0, 0.08); color: var(--primary-color); }
+    .status-verifying { background: rgba(224, 169, 0, 0.15); color: #B58B00; }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    @media (max-width: 992px) {
+      .details-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .detail-card {
+      background: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+      margin-bottom: 2rem;
+    }
+
+    .info-list dt {
+      font-weight: 600;
+      color: var(--primary-color);
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .info-list dd {
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      margin-left: 0;
+    }
+
+    /* File upload premium style */
+    .file-upload-wrapper {
+      position: relative;
+      border: 2px dashed var(--border-color);
+      border-radius: 12px;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      background: var(--bg-color);
+      transition: all var(--transition-fast);
+      cursor: pointer;
+    }
+
+    .file-upload-wrapper:hover {
+      border-color: var(--accent-color);
+      background: rgba(159, 93, 68, 0.02);
+    }
+
+    .file-upload-wrapper input[type="file"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .file-upload-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 1rem;
+      color: var(--accent-color);
+      opacity: 0.8;
+    }
+
+    .spinner {
+      border: 3px solid rgba(159, 93, 68, 0.1);
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border-left-color: var(--accent-color);
+      animation: spin 1s linear infinite;
+      margin: 1rem auto;
+      display: none;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Animated Mesh Background -->
+  <div class="ambient-bg">
+    <div class="glow-bubble glow-1"></div>
+    <div class="glow-bubble glow-2"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="checkout-header">
+    <div class="container">
+      <a href="index.html" class="logo">Sage Anjiana</a>
+    </div>
+  </header>
+
+  <!-- Main Area -->
+  <main style="padding: 3rem 0; min-height: 70vh;">
+    <div class="container" style="max-width: 1200px;">
+      
+      <!-- Track Order Search (Shown when no ID in URL) -->
+      <div id="trackSearchSection" class="detail-card" style="max-width: 600px; margin: 0 auto; text-align: center; display: none;">
+        <h2 style="font-size: 2rem; margin-bottom: 0.5rem; font-weight: 700;">Track Your Order</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Enter your Order ID to view shipping status, details, and upload payment slips.</p>
+        
+        <form id="trackOrderForm" style="display: flex; flex-direction: column; gap: 1rem;">
+          <div class="form-group" style="text-align: left;">
+            <label for="trackOrderId" style="font-weight: 600;">Order ID</label>
+            <input type="text" id="trackOrderId" class="form-control" placeholder="e.g., d8F2hK9z1pW5sQ4" required style="width: 100%; font-family: monospace;">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px;">Track Order</button>
+        </form>
+      </div>
+
+      <!-- Order Details Area (Shown when ID is in URL) -->
+      <div id="orderDetailsSection" style="display: none;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem;">
+          <div>
+            <a href="index.html" style="font-size: 0.9rem; color: var(--accent-color); display: inline-flex; align-items: center; gap: 4px; margin-bottom: 0.5rem; font-weight: 500;">
+              ← Back to Shopping
+            </a>
+            <h1 style="font-size: 2rem; font-weight: 700; margin: 0;">Order Details</h1>
+            <p style="color: var(--text-muted); margin: 4px 0 0 0; font-family: monospace; font-size: 0.95rem;">ID: <span id="displayOrderId" style="color: var(--primary-color);"></span></p>
+          </div>
+          <div style="text-align: right; display: flex; flex-direction: column; gap: 6px; align-items: flex-end;">
+            <span id="orderStatusBadge" class="order-status-badge">Pending</span>
+            <span id="orderDate" style="font-size: 0.9rem; color: var(--text-muted);">Placed on July 10, 2026</span>
+          </div>
+        </div>
+
+        <div class="details-grid">
+          
+          <!-- Left Column (Order Items, Shipping info) -->
+          <div>
+            <!-- Order Items Card -->
+            <div class="detail-card">
+              <h3 style="margin-bottom: 1.5rem; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem;">Ordered Items</h3>
+              <div id="itemsContainer">
+                <!-- Dynamically loaded items will go here -->
+              </div>
+              
+              <!-- Total summary block -->
+              <div style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; max-width: 350px; margin-left: auto;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem; font-size: 0.95rem; color: var(--text-muted);">
+                  <span>Subtotal</span>
+                  <span id="detailSubtotal">Rs.0.00</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem; font-size: 0.95rem; color: var(--text-muted);">
+                  <span>Shipping</span>
+                  <span id="detailShipping">Rs.0.00</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 1.3rem; font-weight: 700; color: var(--primary-color); border-top: 1px solid var(--border-color); padding-top: 0.8rem; margin-top: 0.8rem;">
+                  <span>Total</span>
+                  <span id="detailTotal">Rs.0.00</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Customer Shipping details card -->
+            <div class="detail-card">
+              <h3 style="margin-bottom: 1.5rem; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem;">Delivery Details</h3>
+              <div class="form-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div>
+                  <h4 style="font-size: 0.9rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem;">Delivery Address</h4>
+                  <p id="detailAddress" style="font-size: 1rem; color: var(--primary-color); line-height: 1.5; margin: 0;"></p>
+                </div>
+                <div>
+                  <h4 style="font-size: 0.9rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem;">Contact Information</h4>
+                  <p id="detailCustomerName" style="font-weight: 600; margin-bottom: 4px;"></p>
+                  <p id="detailPhone" style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 4px;"></p>
+                  <p id="detailEmail" style="font-size: 0.95rem; color: var(--text-muted); margin: 0;"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column (Payment Status, Upload slip) -->
+          <div>
+            
+            <!-- Payment Info Card -->
+            <div class="detail-card">
+              <h3 style="margin-bottom: 1.5rem; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem;">Payment Status</h3>
+              
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <div>
+                  <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Method</p>
+                  <strong id="detailPaymentMethod" style="font-size: 1.1rem;">Cash on Delivery</strong>
+                </div>
+                <span id="paymentStatusBadge" class="order-status-badge">Pending</span>
+              </div>
+
+              <!-- Conditional Slip Upload Area -->
+              <div id="slipUploadSection" style="display: none; border-top: 1px dashed var(--border-color); padding-top: 1.5rem;">
+                
+                <!-- Bank Transfer Account Info Card -->
+                <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+                  <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 0.8rem; color: var(--primary-color);">Store Bank Details</h4>
+                  <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+                    <p><strong>Bank:</strong> Sampath Bank</p>
+                    <p><strong>A/C Holder:</strong> SAGE ANJIANA Clothing Store</p>
+                    <p><strong>A/C Number:</strong> 1234 5678 9012</p>
+                    <p><strong>Branch:</strong> Colombo Fort</p>
+                    <p style="margin-top: 4px; color: var(--accent-color);">* Please use your Order ID as payment reference.</p>
+                  </div>
+                </div>
+
+                <div class="file-upload-wrapper" id="uploadWrapper">
+                  <svg class="file-upload-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                  <h4 style="font-size: 1rem; margin-bottom: 4px; font-weight: 600;" id="uploadInstruction">Upload Bank Slip</h4>
+                  <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">PNG, JPG, or PDF up to 5MB</p>
+                  <input type="file" id="bankSlipInput" accept="image/*,application/pdf">
+                </div>
+
+                <div id="uploadSpinner" class="spinner"></div>
+                <div id="uploadStatus" style="font-size: 0.9rem; text-align: center; margin-top: 1rem; font-weight: 500;"></div>
+              </div>
+
+              <!-- Payment Verification Underway Message -->
+              <div id="paymentVerifyingSection" style="display: none; border-top: 1px dashed var(--border-color); padding-top: 1.5rem; text-align: center;">
+                <div style="width: 50px; height: 50px; background: rgba(224, 169, 0, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B58B00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                </div>
+                <h4 style="font-size: 1.05rem; font-weight: 600; margin-bottom: 0.5rem; color: #B58B00;">Verification in Progress</h4>
+                <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin: 0;">We have received your bank deposit slip. Our team is verifying the payment, and we will process your order soon.</p>
+                
+                <div id="proofPreviewContainer" style="margin-top: 1.5rem; display: none;">
+                  <p style="font-size: 0.8rem; color: var(--text-muted); text-align: left; margin-bottom: 6px;">Uploaded Bank Slip:</p>
+                  <img id="proofPreviewImage" src="" style="width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px; border: 1px solid var(--border-color);" alt="Bank Slip Proof">
+                </div>
+              </div>
+
+              <!-- Payment Success Info -->
+              <div id="paymentCompletedSection" style="display: none; border-top: 1px dashed var(--border-color); padding-top: 1.5rem; text-align: center;">
+                <div style="width: 50px; height: 50px; background: rgba(30, 124, 58, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1E7C3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <h4 style="font-size: 1.05rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--success-color);">Payment Verified</h4>
+                <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin: 0;">Thank you! Your payment has been successfully verified. Your order is being processed.</p>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <footer style="padding: 2rem 0;">
+    <div class="container text-center" style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+      <div style="display: flex; gap: 1.5rem; align-items: center; justify-content: center; flex-wrap: wrap;">
+        <a href="https://wa.me/94704300342" target="_blank" rel="noopener noreferrer"
+           style="display:inline-flex; align-items:center; gap:0.5rem; color:#fff; text-decoration:none; font-size:0.95rem; opacity:0.9;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#25D366">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+          </svg>
+          0704300342
+        </a>
+        <a href="https://maps.app.goo.gl/mKMUB5VmGMBQZMx19" target="_blank" rel="noopener noreferrer"
+           style="display:inline-flex; align-items:center; gap:0.5rem; color:#fff; text-decoration:none; font-size:0.95rem; opacity:0.9;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EA4335" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          Visit Us
+        </a>
+      </div>
+      <p style="color: rgba(255,255,255,0.6); font-size: 0.85rem; margin-top: 0.5rem;">&copy; 2026 Sage Anjiana Clothing. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+  <script type="module" src="js/order-details.js"></script>
+</body>
+</html>

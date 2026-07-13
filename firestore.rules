@@ -18,10 +18,10 @@ service cloud.firestore {
 
     // Orders Collection
     match /orders/{orderId} {
-      // Customers can create orders without being logged in
-      allow create: if true;
-      // Only authenticated users (Admins) can read/update orders
-      allow read, update, delete: if isAuthenticated();
+      // Customers can create, read, and update orders without being logged in
+      allow create, read, update: if true;
+      // Only authenticated users (Admins) can delete orders
+      allow delete: if isAuthenticated();
     }
   }
 }
