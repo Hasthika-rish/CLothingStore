@@ -1,0 +1,39 @@
+# ==========================================================
+# Sage Anjiana Admin Panel - Apache / Hostinger Subdomain Configuration
+# ==========================================================
+
+# Enable Directory Listing Protection
+Options -Indexes
+
+# Set Default Index Document
+DirectoryIndex index.php index.html
+
+# UTF-8 Encoding Default
+AddDefaultCharset UTF-8
+
+# Security Headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Protect Hidden Files
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Allow PHP execution and upload file sizes
+<IfModule mod_php7.c>
+    php_value upload_max_filesize 20M
+    php_value post_max_size 25M
+    php_value max_execution_time 300
+    php_value max_input_time 300
+</IfModule>
+<IfModule mod_php.c>
+    php_value upload_max_filesize 20M
+    php_value post_max_size 25M
+    php_value max_execution_time 300
+    php_value max_input_time 300
+</IfModule>

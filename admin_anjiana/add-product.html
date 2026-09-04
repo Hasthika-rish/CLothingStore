@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Redirecting | Anjiana Admin</title>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+    if (productId) {
+      window.location.replace('dashboard.php#add-product?id=' + productId);
+    } else {
+      window.location.replace('dashboard.php#add-product');
+    }
+  </script>
+</head>
+<body>
+  <p style="font-family: sans-serif; text-align: center; margin-top: 50px; color: #666;">Redirecting to the admin console...</p>
+</body>
+</html>

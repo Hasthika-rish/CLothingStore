@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login | Sage Anjiana</title>
+  <link rel="icon" type="image/png" href="images/logo.png">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<style>
+  .auth-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1f1f1f 0%, #111111 100%);
+    position: relative;
+  }
+
+  .auth-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+  }
+
+  .auth-box {
+    position: relative;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 3rem;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    color: #fff;
+  }
+
+  .auth-box .form-control {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+  }
+
+  .auth-box .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .auth-box .form-control:focus {
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .password-wrapper {
+    position: relative;
+  }
+
+  .password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .password-toggle:hover {
+    color: #fff;
+  }
+
+  .forgot-link {
+    display: block;
+    text-align: right;
+    font-size: 0.85rem;
+    color: var(--primary-color);
+    margin-top: 0.5rem;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .forgot-link:hover {
+    text-decoration: underline;
+  }
+
+  .reset-message {
+    display: none;
+    background: rgba(76, 175, 80, 0.2);
+    color: #81C784;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  /* Loading Overlay */
+  .loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(17, 17, 17, 0.85);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    z-index: 10;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .loading-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .spinner {
+    width: 44px;
+    height: 44px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    border-top-color: #81c784;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .loading-text {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+  }
+
+  @media (max-width: 480px) {
+    .auth-box {
+      padding: 2rem 1.25rem;
+      margin: 1.25rem;
+      border-radius: 12px;
+    }
+
+    .auth-box h2 {
+      font-size: 1.3rem !important;
+      margin-bottom: 1.5rem !important;
+    }
+
+    .logo {
+      font-size: 1.35rem !important;
+      margin-bottom: 1.5rem !important;
+    }
+
+    .btn {
+      padding: 12px;
+    }
+  }
+</style>
+
+<body>
+
+  <div class="auth-wrapper">
+    <div class="auth-box">
+      <!-- Loading Overlay -->
+      <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <div class="loading-text">Verifying credentials...</div>
+      </div>
+
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <img src="images/logo.png" alt="Sage Anjiana Logo"
+          style="width: 80px; height: 80px; object-fit: contain; border-radius: 50%; background: #fff; padding: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.25);">
+        <div class="logo"
+          style="margin-top: 0.75rem; font-size: 1.4rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1px;">
+          Sage Anjiana</div>
+      </div>
+      <h2 style="font-size: 1.5rem; margin-bottom: 2rem; text-align: center; font-weight: 500;">Welcome Back</h2>
+
+      <!-- Tab Toggles -->
+      <div class="auth-tabs"
+        style="display: flex; gap: 0.5rem; margin-bottom: 2rem; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px;">
+        <button type="button" id="tabAdmin" class="auth-tab-btn active"
+          style="flex: 1; padding: 10px; border: none; background: rgba(255,255,255,0.1); color: #fff; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.3s ease;">Admin
+          Login</button>
+        <button type="button" id="tabStaff" class="auth-tab-btn"
+          style="flex: 1; padding: 10px; border: none; background: none; color: rgba(255,255,255,0.5); font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.3s ease;">Staff
+          Login</button>
+      </div>
+
+      <form id="loginForm">
+        <div id="errorMessage"
+          style="display: none; color: #EF5350; background: rgba(239, 83, 80, 0.1); border: 1px solid rgba(239, 83, 80, 0.3); padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 0.9rem; text-align: center;">
+        </div>
+        <div id="resetMessage" class="reset-message"></div>
+
+        <div class="form-group">
+          <label for="email" id="emailLabel" style="color: rgba(255,255,255,0.8);">Admin Email Address</label>
+          <input type="email" id="email" class="form-control" placeholder="Enter email address" required>
+        </div>
+
+        <div class="form-group" id="passwordGroup">
+          <label for="password" style="color: rgba(255,255,255,0.8);">Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="password" class="form-control" placeholder="Enter password">
+            <button type="button" id="togglePassword" class="password-toggle" aria-label="Toggle password visibility">
+              👁️
+            </button>
+          </div>
+          <a class="forgot-link" id="forgotPasswordBtn">Forgot Password?</a>
+        </div>
+
+        <button type="submit" id="loginBtn" class="btn btn-primary"
+          style="width: 100%; margin-top: 1rem; padding: 14px; font-size: 1rem;">Login to Dashboard</button>
+      </form>
+
+      <div style="text-align: center; margin-top: 2rem;">
+        <a href="../index.html" style="color: rgba(255,255,255,0.5); font-size: 0.9rem; text-decoration: none;">← Back
+          to Store</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script type="module" src="js/admin-auth.js"></script>
+</body>
+
+</html>
